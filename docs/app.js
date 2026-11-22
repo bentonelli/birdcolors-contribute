@@ -11,7 +11,7 @@
 
   // Paste your Google Apps Script web-app URL here (ends in /exec).
   // See README.md (setup steps). While empty, submissions are not sent.
-  const SUBMIT_URL = "";
+  const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbxDKaNe_T_NSt-pzUbsJUfjIWwJS1p0OsH7yAYvCu4s9-A_ywrCScd2Wti2G_0AGRE/exec";
 
   // Existing palettes, used to warn about duplicates.
   const PALETTE_SOURCE_URL =

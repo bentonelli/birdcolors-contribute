@@ -4,6 +4,10 @@
  * Paste this into the Apps Script editor of a Google Sheet
  * (Extensions > Apps Script) and deploy it as a web app.
  * Full instructions: README.md in this repository
+ *
+ * The annotation below limits the script's access to the one spreadsheet
+ * it is attached to, instead of all your Google Sheets.
+ * @OnlyCurrentDoc
  */
 
 // Tab that receives submissions (created automatically if missing).

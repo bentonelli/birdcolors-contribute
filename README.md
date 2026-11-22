@@ -44,8 +44,11 @@ won't work properly, because browsers block parts of the page for local files.
    - Optional: set `NOTIFY_EMAIL` to the address that should get an email for
      each submission.
 3. **Test it.** In the editor, pick `testSubmission` from the function menu and
-   click **Run**. Google will ask you to authorize the script (it needs access
-   to this spreadsheet, plus sending email if you set `NOTIFY_EMAIL`). Because
+   click **Run**. Google will ask you to authorize the script. It should list
+   only two permissions: viewing and managing *the spreadsheet this app is
+   installed in*, and sending email as you (used only if `NOTIFY_EMAIL` is set).
+   If it asks for *all* your spreadsheets, the `@OnlyCurrentDoc` line near the
+   top of the script is missing. Because
    it's your own unverified script, you'll see an "unverified app" screen; choose
    **Advanced → Go to (project name)**. Check that a test row appeared, then
    delete it.
