@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>birdcolors · Contribute a palette</title>
+  <meta name="description" content="Pick colours from a photo of a bird and contribute a palette to the birdcolors R package.">
+  <link rel="icon" href="logo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <img src="logo.png" alt="birdcolors logo" class="logo">
+    <div>
+      <h1>Contribute a bird palette</h1>
+      <p class="lede">
+        Load a photo of a bird, click on its feathers, bill, legs or eyes to build a palette of
+        2&ndash;9 colours, then send it in. Accepted palettes are added to the
+        <a href="https://github.com/bentonelli/birdcolors">birdcolors R package</a>
+        and you are credited as a contributor.
+      </p>
+    </div>
+  </header>
+
+  <main>
+    <!-- Step 1: image -->
+    <section class="card" aria-labelledby="step1">
+      <h2 id="step1"><span class="step">1</span> Load a photo</h2>
+
+      <div id="dropzone" class="dropzone" tabindex="0" role="button"
+           aria-label="Drop an image here or press Enter to choose a file">
+        <p><strong>Drag and drop a bird photo here</strong></p>
+        <p>or <label class="file-label">choose a file<input type="file" id="file-input" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp"></label>, or paste an image (Ctrl/⌘&nbsp;+&nbsp;V)</p>
+        <p class="hint">JPEG, PNG or WebP. Your photo stays on your device &mdash; it is never uploaded.</p>
+      </div>
+
+      <p id="image-message" class="message" role="status" hidden></p>
+
+      <div id="picker" class="picker" hidden>
+        <div class="picker-toolbar">
+          <label>Sample size
+            <select id="sample-size">
+              <option value="1">1 pixel</option>
+              <option value="3">3 × 3</option>
+              <option value="5" selected>5 × 5</option>
+              <option value="9">9 × 9</option>
+              <option value="15">15 × 15</option>
+            </select>
+          </label>
+          <span class="hint">Click (or tap and drag) on the bird to add a colour. Avoid glare and deep shadow.</span>
+          <button type="button" id="change-image" class="secondary">Use a different photo</button>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="image-canvas" aria-label="Bird photo. Click to pick a colour."></canvas>
+          <div id="loupe" class="loupe" hidden>
+            <canvas id="loupe-canvas" width="132" height="132"></canvas>
+            <div id="loupe-hex" class="loupe-hex"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 2: palette -->
+    <section class="card" aria-labelledby="step2">
+      <h2 id="step2"><span class="step">2</span> Arrange your palette</h2>
+      <p class="hint">
+        Drag swatches (or use the arrows) to reorder them. Order matters for sequential and diverging palettes.
+        You can also type a hex code directly.
+      </p>
+
+      <ol id="swatches" class="swatches"></ol>
+      <p id="empty-palette" class="empty">No colours yet &mdash; click on the photo to add some.</p>
+
+      <div class="palette-actions">
+        <button type="button" id="add-manual" class="secondary">+ Add a colour manually</button>
+        <button type="button" id="clear-palette" class="secondary">Clear all</button>
+        <span id="count" class="count">0 / 9 colours</span>
+      </div>
+
+      <div id="preview" class="preview" aria-label="Palette preview"></div>
+
+      <details class="rcode">
+        <summary>R code for this palette</summary>
+        <pre><code id="r-code"></code></pre>
+        <button type="button" id="copy-r" class="secondary small">Copy</button>
+      </details>
+    </section>
+
+    <!-- Step 3: submit -->
+    <section class="card" aria-labelledby="step3">
+      <h2 id="step3"><span class="step">3</span> Send it in</h2>
+
+      <form id="submit-form" novalidate>
+        <div class="grid">
+          <label>First name *
+            <input type="text" id="first-name" name="first_name" autocomplete="given-name" maxlength="60" required>
+          </label>
+          <label>Last name *
+            <input type="text" id="last-name" name="last_name" autocomplete="family-name" maxlength="60" required>
+          </label>
+          <label class="span-2">Bird common name *
+            <input type="text" id="species" name="species" maxlength="80" required
+                   placeholder="e.g. Painted Bunting">
+            <span id="species-warning" class="field-warning" hidden></span>
+          </label>
+          <label>Palette type
+            <select id="palette-type" name="palette_type">
+              <option value="">Not sure</option>
+              <option value="discrete">Discrete (distinct categories)</option>
+              <option value="sequential">Sequential (light → dark)</option>
+              <option value="diverging">Diverging (two extremes + middle)</option>
+            </select>
+          </label>
+          <label>Photo source / credit
+            <input type="text" id="photo-credit" name="photo_credit" maxlength="200"
+                   placeholder="e.g. my own photo, Macaulay Library ML123456">
+          </label>
+          <label class="span-2">Notes
+            <textarea id="notes" name="notes" rows="2" maxlength="1000"
+                      placeholder="Anything we should know (sex, plumage, subspecies…)"></textarea>
+          </label>
+          <!-- Honeypot: humans never see or fill this -->
+          <label class="hp" aria-hidden="true">Website
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+          </label>
+        </div>
+
+        <p class="hint">
+          Your first and last name will be listed publicly as a contributor to birdcolors. Only the colour codes,
+          bird name and the details above are sent &mdash; not your photo.
+        </p>
+
+        <ul id="form-errors" class="form-errors" hidden></ul>
+
+        <button type="submit" id="submit-btn" class="primary">Submit palette</button>
+        <p id="submit-message" class="message" role="status" hidden></p>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      <a href="https://github.com/bentonelli/birdcolors">birdcolors on GitHub</a> ·
+      Questions or problems? <a href="https://github.com/bentonelli/birdcolors/issues">Open an issue</a>.
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
