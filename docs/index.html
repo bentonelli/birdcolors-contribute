@@ -9,6 +9,10 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <nav class="site-nav">
+    <a href="index.html" aria-current="page">Contribute a palette</a>
+    <a href="palettes.html">Browse palettes</a>
+  </nav>
   <header class="site-header">
     <img src="logo.png" alt="birdcolors logo" class="logo">
     <div>
@@ -17,7 +21,7 @@
         Load a photo of a bird, click on its feathers, bill, legs or eyes to build a palette of
         2&ndash;9 colours, then send it in. Accepted palettes are added to the
         <a href="https://github.com/bentonelli/birdcolors">birdcolors R package</a>
-        and you are credited as a contributor.
+        and you are credited as a contributor (unless you'd rather stay anonymous).
       </p>
     </div>
   </header>
@@ -92,10 +96,14 @@
 
       <form id="submit-form" novalidate>
         <div class="grid">
-          <label>First name *
+          <label class="checkbox span-2">
+            <input type="checkbox" id="anonymous" name="anonymous">
+            Stay anonymous &mdash; don't list my name as a contributor
+          </label>
+          <label>First name <span class="req" data-required>*</span>
             <input type="text" id="first-name" name="first_name" autocomplete="given-name" maxlength="60" required>
           </label>
-          <label>Last name *
+          <label>Last name <span class="req" data-required>*</span>
             <input type="text" id="last-name" name="last_name" autocomplete="family-name" maxlength="60" required>
           </label>
           <label class="span-2">Bird common name *
@@ -115,17 +123,13 @@
             <input type="text" id="photo-credit" name="photo_credit" maxlength="200"
                    placeholder="e.g. my own photo, Macaulay Library ML123456">
           </label>
-          <label class="span-2">Notes
-            <textarea id="notes" name="notes" rows="2" maxlength="1000"
-                      placeholder="Anything we should know (sex, plumage, subspecies…)"></textarea>
-          </label>
           <!-- Honeypot: humans never see or fill this -->
           <label class="hp" aria-hidden="true">Website
             <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
           </label>
         </div>
 
-        <p class="hint">
+        <p class="hint" id="credit-hint">
           Your first and last name will be listed publicly as a contributor to birdcolors. Only the colour codes,
           bird name and the details above are sent &mdash; not your photo.
         </p>
@@ -145,6 +149,7 @@
     </p>
   </footer>
 
+  <script src="palettes-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>birdcolors · Browse palettes</title>
+  <meta name="description" content="Every colour palette currently in the birdcolors R package, with species names and hex codes.">
+  <link rel="icon" href="logo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="index.html">Contribute a palette</a>
+    <a href="palettes.html" aria-current="page">Browse palettes</a>
+  </nav>
+  <header class="site-header">
+    <img src="logo.png" alt="birdcolors logo" class="logo">
+    <div>
+      <h1>Browse the palettes</h1>
+      <p class="lede">
+        Every palette currently in the <a href="https://github.com/bentonelli/birdcolors">birdcolors R package</a>.
+        Click a colour to copy its hex code, or copy the R code to use the whole palette.
+      </p>
+    </div>
+  </header>
+
+  <main>
+    <section class="card gallery-controls" aria-label="Filter palettes">
+      <label>Search
+        <input type="search" id="search" placeholder="Bird name or hex code" autocomplete="off">
+      </label>
+      <label>Colours
+        <select id="n-colors">
+          <option value="">Any</option>
+          <option value="2">2</option><option value="3">3</option><option value="4">4</option>
+          <option value="5">5</option><option value="6">6</option><option value="7">7</option>
+          <option value="8">8</option><option value="9">9</option>
+        </select>
+      </label>
+      <label>Sort
+        <select id="sort">
+          <option value="package">Package order</option>
+          <option value="name">Name (A–Z)</option>
+        </select>
+      </label>
+      <label class="inline-check">
+        <input type="checkbox" id="rec-only"> Recommended only
+      </label>
+    </section>
+
+    <p id="gallery-status" class="gallery-status" role="status">Loading palettes…</p>
+    <div id="gallery" class="gallery"></div>
+
+    <p class="gallery-cta">
+      Don't see your favourite bird? <a href="index.html">Contribute a palette</a>.
+    </p>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <footer>
+    <p>
+      <a href="https://github.com/bentonelli/birdcolors">birdcolors on GitHub</a> ·
+      Palettes are read live from the package source, so new ones appear here as soon as they're added.
+    </p>
+  </footer>
+
+  <script src="palettes-data.js"></script>
+  <script src="gallery.js"></script>
+</body>
+</html>

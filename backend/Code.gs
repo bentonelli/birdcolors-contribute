@@ -19,9 +19,12 @@ const NOTIFY_EMAIL = "";
 // Crude global spam brake: refuse more than this many submissions per hour.
 const MAX_PER_HOUR = 60;
 
+// Column order for a new sheet. Rows are written by header name, so adding,
+// removing or reordering columns in an existing sheet is safe: unknown
+// columns are left blank and missing ones are added at the end.
 const HEADERS = [
-  "timestamp", "status", "first_name", "last_name", "species", "palette_name",
-  "palette_type", "n_colors", "colors", "r_code", "photo_credit", "notes", "page",
+  "timestamp", "status", "anonymous", "first_name", "last_name", "species",
+  "palette_name", "palette_type", "n_colors", "colors", "r_code", "photo_credit", "page",
 ];
 
 function doPost(e) {
@@ -44,21 +47,21 @@ function doPost(e) {
       }
       cache.put(hourKey, String(count + 1), 3600);
 
-      sheet_().appendRow([
-        new Date(),
-        "new",
-        clean.first_name,
-        clean.last_name,
-        clean.species,
-        clean.palette_name,
-        clean.palette_type,
-        clean.colors.length,
-        clean.colors.join(", "),
-        clean.r_code,
-        clean.photo_credit,
-        clean.notes,
-        clean.page,
-      ].map(safeCell_));
+      appendRecord_(sheet_(), {
+        timestamp: new Date(),
+        status: "new",
+        anonymous: clean.anonymous ? "yes" : "no",
+        first_name: clean.first_name,
+        last_name: clean.last_name,
+        species: clean.species,
+        palette_name: clean.palette_name,
+        palette_type: clean.palette_type,
+        n_colors: clean.colors.length,
+        colors: clean.colors.join(", "),
+        r_code: clean.r_code,
+        photo_credit: clean.photo_credit,
+        page: clean.page,
+      });
     } finally {
       lock.releaseLock();
     }
@@ -68,13 +71,13 @@ function doPost(e) {
         to: NOTIFY_EMAIL,
         subject: "New birdcolors palette: " + clean.species,
         body: [
-          "From: " + clean.first_name + " " + clean.last_name,
+          "From: " + ((clean.first_name + " " + clean.last_name).trim() || "(no name given)") +
+            (clean.anonymous ? " [wants to stay anonymous]" : ""),
           "Bird: " + clean.species + (clean.palette_type ? " (" + clean.palette_type + ")" : ""),
           "",
           clean.r_code,
           "",
           "Photo: " + (clean.photo_credit || "-"),
-          "Notes: " + (clean.notes || "-"),
         ].join("\n"),
       });
     }
@@ -98,10 +101,12 @@ function validate_(d) {
     species: str(d.species, 80),
     palette_type: str(d.palette_type, 20),
     photo_credit: str(d.photo_credit, 200),
-    notes: str(d.notes, 1000),
     page: str(d.page, 200),
+    anonymous: d.anonymous === true,
   };
-  if (!out.first_name || !out.last_name) throw new Error("First and last name are required.");
+  if (!out.anonymous && (!out.first_name || !out.last_name)) {
+    throw new Error("First and last name are required unless you choose to stay anonymous.");
+  }
   if (!out.species) throw new Error("Bird name is required.");
   if (["", "discrete", "sequential", "diverging"].indexOf(out.palette_type) < 0) {
     throw new Error("Unknown palette type.");
@@ -134,6 +139,19 @@ function sheet_() {
   return sh;
 }
 
+/** Append one row, placing each value under the column with the same header. */
+function appendRecord_(sh, record) {
+  let headers = sh.getRange(1, 1, 1, Math.max(sh.getLastColumn(), 1)).getValues()[0]
+    .map(String);
+  while (headers.length && !headers[headers.length - 1]) headers.pop();
+  const missing = Object.keys(record).filter((k) => headers.indexOf(k) < 0);
+  if (missing.length) {
+    sh.getRange(1, headers.length + 1, 1, missing.length).setValues([missing]);
+    headers = headers.concat(missing);
+  }
+  sh.appendRow(headers.map((h) => (h in record ? safeCell_(record[h]) : "")));
+}
+
 // Stop user text being interpreted as a spreadsheet formula.
 function safeCell_(v) {
   return typeof v === "string" && /^[=+\-@]/.test(v) ? "'" + v : v;
@@ -151,7 +169,7 @@ function testSubmission() {
       contents: JSON.stringify({
         first_name: "Test", last_name: "User", species: "Painted Bunting",
         palette_type: "discrete", colors: ["#166EC6", "#E73619", "#8FA200", "#EA9606"],
-        photo_credit: "test", notes: "delete me", page: "editor",
+        photo_credit: "test - delete me", page: "editor", anonymous: false,
       }),
     },
   });

@@ -13,10 +13,6 @@
   // See README.md (setup steps). While empty, submissions are not sent.
   const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbxDKaNe_T_NSt-pzUbsJUfjIWwJS1p0OsH7yAYvCu4s9-A_ywrCScd2Wti2G_0AGRE/exec";
 
-  // Existing palettes, used to warn about duplicates.
-  const PALETTE_SOURCE_URL =
-    "https://raw.githubusercontent.com/bentonelli/birdcolors/main/R/base_colors.R";
-
   const MIN_COLORS = 2;
   const MAX_COLORS = 9;
   const MAX_IMAGE_DIM = 2000; // longest side of the working copy, in pixels
@@ -46,6 +42,8 @@
   const form = $("submit-form");
   const speciesInput = $("species");
   const speciesWarning = $("species-warning");
+  const anonymousBox = $("anonymous");
+  const creditHint = $("credit-hint");
   const formErrors = $("form-errors");
   const submitBtn = $("submit-btn");
   const submitMessage = $("submit-message");
@@ -486,12 +484,22 @@
     renderPalette();
   });
   $("copy-r").addEventListener("click", async (e) => {
+    const text = rCode();
+    let ok = false;
     try {
-      await navigator.clipboard.writeText(rCode());
-      e.target.textContent = "Copied!";
+      await navigator.clipboard.writeText(text);
+      ok = true;
     } catch {
-      e.target.textContent = "Copy failed";
+      // Fallback for stricter browsers: copy from a hidden, selected textarea.
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;";
+      document.body.append(ta);
+      ta.select();
+      try { ok = document.execCommand("copy"); } catch { ok = false; }
+      ta.remove();
     }
+    e.target.textContent = ok ? "Copied!" : "Copy failed";
     setTimeout(() => { e.target.textContent = "Copy"; }, 1500);
   });
 
@@ -499,16 +507,10 @@
   // Existing palettes (duplicate warning)
   // ---------------------------------------------------------------------------
 
-  fetch(PALETTE_SOURCE_URL)
-    .then((r) => (r.ok ? r.text() : ""))
-    .then((src) => {
-      // Palette entries look like:  Scarlet_Tanager = c("#34323F","#AA2720"),
-      const start = src.indexOf("bird_palettes <- list(");
-      const end = src.indexOf("rec_bird_palettes");
-      const block = start >= 0 ? src.slice(start, end > start ? end : undefined) : "";
-      for (const m of block.matchAll(/^\s*([A-Z][A-Za-z0-9_]*)\s*=\s*c\(/gm)) {
-        existingPalettes.add(m[1].toLowerCase());
-      }
+  // Existing palettes come from palettes-data.js (shared with the browse page).
+  window.BirdPalettes.load()
+    .then(({ palettes }) => {
+      existingPalettes = new Set(palettes.map((p) => p.name.toLowerCase()));
       checkSpecies();
     })
     .catch(() => { /* offline or blocked: skip the duplicate check */ });
@@ -518,10 +520,29 @@
     const dup = name && existingPalettes.has(name.toLowerCase());
     speciesWarning.hidden = !dup;
     speciesWarning.textContent = dup
-      ? "birdcolors already has a palette for this bird. You can still submit one (e.g. a different plumage) — say why in the notes."
+      ? "birdcolors already has a palette for this bird. You can still submit one (e.g. a different plumage or sex)."
       : "";
   }
   speciesInput.addEventListener("input", () => { checkSpecies(); updateSummary(); });
+
+  // ---------------------------------------------------------------------------
+  // Anonymous contributions
+  // ---------------------------------------------------------------------------
+
+  const CREDIT_TEXT = {
+    named: "Your first and last name will be listed publicly as a contributor to birdcolors.",
+    anonymous: "Your contribution won't be credited publicly. Your name is optional and, if you give it, stays private.",
+  };
+
+  function updateAnonymous() {
+    const anon = anonymousBox.checked;
+    for (const id of ["first-name", "last-name"]) $(id).required = !anon;
+    document.querySelectorAll("[data-required]").forEach((el) => { el.hidden = anon; });
+    creditHint.textContent = (anon ? CREDIT_TEXT.anonymous : CREDIT_TEXT.named) +
+      " Only the colour codes, bird name and the details above are sent — not your photo.";
+  }
+  anonymousBox.addEventListener("change", updateAnonymous);
+  updateAnonymous();
 
   // ---------------------------------------------------------------------------
   // Submission
@@ -529,8 +550,10 @@
 
   function validate() {
     const errors = [];
-    if (!$("first-name").value.trim()) errors.push("Please enter your first name.");
-    if (!$("last-name").value.trim()) errors.push("Please enter your last name.");
+    if (!anonymousBox.checked) {
+      if (!$("first-name").value.trim()) errors.push("Please enter your first name (or tick “Stay anonymous”).");
+      if (!$("last-name").value.trim()) errors.push("Please enter your last name (or tick “Stay anonymous”).");
+    }
     if (!speciesInput.value.trim()) errors.push("Please enter the bird's common name.");
     else if (!paletteName(speciesInput.value)) errors.push("The bird's name should contain letters.");
     if (palette.length < MIN_COLORS) errors.push(`Pick at least ${MIN_COLORS} colours.`);
@@ -555,6 +578,7 @@
     if (errors.length) return;
 
     const payload = {
+      anonymous: anonymousBox.checked,
       first_name: $("first-name").value.trim(),
       last_name: $("last-name").value.trim(),
       species: speciesInput.value.trim(),
@@ -563,7 +587,6 @@
       colors: palette.map((p) => p.hex),
       r_code: rCode(),
       photo_credit: $("photo-credit").value.trim(),
-      notes: $("notes").value.trim(),
       website: $("website").value, // honeypot
       page: location.origin + location.pathname,
     };
@@ -589,13 +612,12 @@
       if (!res.ok || !out.ok) throw new Error(out.error || `Server responded ${res.status}`);
 
       showMessage(submitMessage,
-        `Thank you, ${payload.first_name}! Your ${payload.species} palette was submitted for review.`, "ok");
+        `Thank you${payload.first_name ? ", " + payload.first_name : ""}! Your ${payload.species} palette was submitted for review.`, "ok");
       palette = [];
       renderPalette();
       speciesInput.value = "";
       $("palette-type").value = "";
       $("photo-credit").value = "";
-      $("notes").value = "";
       checkSpecies();
       updateSummary();
     } catch (err) {

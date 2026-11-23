@@ -2,7 +2,10 @@
 
 A small website where anyone can build a colour palette from a photo of a bird
 and submit it for the [birdcolors](https://github.com/bentonelli/birdcolors)
-R package.
+R package, and browse the palettes already in it.
+
+- Contribute: https://bentonelli.github.io/birdcolors-contribute/
+- Browse palettes: https://bentonelli.github.io/birdcolors-contribute/palettes.html
 
 This repository is separate from the package on purpose: nothing here is part
 of the R package, and changes here never affect its code, builds, CRAN
@@ -16,11 +19,15 @@ backend/   Code.gs: Google Apps Script that saves submissions to a Google Sheet
 How it fits together:
 
 - The contributor's photo is processed entirely in their browser and is never uploaded.
-- Submissions (name, bird, hex colours, notes) are sent to the Apps Script and
-  saved as one row per palette in your Google Sheet.
-- To warn about duplicates, the site reads `R/base_colors.R` from the birdcolors
-  repo on GitHub. It only reads that file. If the file moves or changes shape,
-  the duplicate warning stops showing and nothing else breaks.
+- Submissions (name, anonymous choice, bird, hex colours, photo credit) are
+  sent to the Apps Script and saved as one row per palette in your Google Sheet.
+  Contributors who tick "Stay anonymous" don't have to give a name.
+- Both pages read `R/base_colors.R` from the birdcolors repo on GitHub
+  (`docs/palettes-data.js`): the contribute page to warn about duplicates, the
+  browse page to list every palette. They only read that file, so new palettes
+  appear on the browse page as soon as they're pushed to the package (GitHub
+  may cache the file for a few minutes). If the file moves or changes shape,
+  those features stop working and nothing else breaks.
 - New palettes reach the package only when you paste them into
   `bird_palettes` in `R/base_colors.R` yourself.
 
@@ -81,9 +88,13 @@ Each row has a `status` column (starts as `new`) you can change to `added` or
 package's `R/base_colors.R`. It's rebuilt on the server from the submitted
 colours, so it's always well-formed.
 
-To update `leaderboard()`, count `added` rows per contributor name. In the
-sheet, a pivot table on `first_name` + `last_name` filtered to `status = added`
-does this.
+To update `leaderboard()`, count `added` rows per contributor name, leaving out
+rows where `anonymous` is `yes`. In the sheet, a pivot table on `first_name` +
+`last_name` filtered to `status = added` and `anonymous = no` does this.
+
+Rows are written by column name, so you can reorder, hide or delete columns
+in the sheet without breaking anything. If the script gains a new field, its
+column is added at the end automatically.
 
 ## Spam protection
 
