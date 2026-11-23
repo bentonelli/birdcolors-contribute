@@ -9,7 +9,6 @@
   const nColorsSel = $("n-colors");
   const sortSel = $("sort");
   const recOnly = $("rec-only");
-  const toast = $("toast");
 
   const REC_LABELS = { discrete: "Discrete", sequential: "Sequential", diverging: "Diverging" };
 
@@ -21,38 +20,6 @@
     const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
       .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
     return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-  }
-
-  function showToast(text) {
-    toast.textContent = text;
-    toast.hidden = false;
-    clearTimeout(showToast.t);
-    showToast.t = setTimeout(() => { toast.hidden = true; }, 1600);
-  }
-
-  /** Older/stricter browsers: copy via a hidden, selected textarea. */
-  function legacyCopy(text) {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.setAttribute("readonly", "");
-    ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;";
-    document.body.append(ta);
-    ta.select();
-    let ok = false;
-    try { ok = document.execCommand("copy"); } catch { ok = false; }
-    ta.remove();
-    return ok;
-  }
-
-  async function copy(text) {
-    let ok = false;
-    try {
-      await navigator.clipboard.writeText(text);
-      ok = true;
-    } catch {
-      ok = legacyCopy(text);
-    }
-    showToast(ok ? `Copied ${text}` : `Couldn't copy automatically: ${text}`);
   }
 
   // ---------------------------------------------------------------------------
@@ -82,28 +49,22 @@
 
     const strip = document.createElement("div");
     strip.className = "palette-strip";
-    p.colors.forEach((hex, i) => {
-      const b = document.createElement("button");
-      b.type = "button";
+    p.colors.forEach((hex) => {
+      const b = document.createElement("span");
       b.style.background = hex;
-      b.title = `${hex} — click to copy`;
-      b.setAttribute("aria-label", `Colour ${i + 1}: ${hex}. Copy hex code`);
-      b.addEventListener("click", () => copy(hex));
+      b.title = hex;
       strip.append(b);
     });
 
     const chips = document.createElement("div");
     chips.className = "hex-chips";
     p.colors.forEach((hex) => {
-      const c = document.createElement("button");
-      c.type = "button";
+      const c = document.createElement("span");
       c.className = "hex-chip";
       const dot = document.createElement("span");
       dot.style.background = hex;
       if (relativeLuminance(hex) > 0.85) dot.classList.add("light");
       c.append(dot, hex);
-      c.title = "Copy " + hex;
-      c.addEventListener("click", () => copy(hex));
       chips.append(c);
     });
 
