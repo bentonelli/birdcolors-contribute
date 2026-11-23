@@ -44,7 +44,7 @@
     return ok;
   }
 
-  async function copy(text, label) {
+  async function copy(text) {
     let ok = false;
     try {
       await navigator.clipboard.writeText(text);
@@ -52,7 +52,7 @@
     } catch {
       ok = legacyCopy(text);
     }
-    showToast(ok ? `Copied ${label || text}` : `Couldn't copy automatically: ${text}`);
+    showToast(ok ? `Copied ${text}` : `Couldn't copy automatically: ${text}`);
   }
 
   // ---------------------------------------------------------------------------
@@ -66,17 +66,19 @@
     const h = document.createElement("h2");
     h.textContent = p.display;
     head.append(h);
+    const n = document.createElement("span");
+    n.className = "n-colors";
+    n.textContent = String(p.colors.length);
+    n.title = `${p.colors.length} colours`;
+    head.append(n);
+    el.append(head);
     if (p.rec) {
       const badge = document.createElement("span");
       badge.className = "badge";
-      badge.textContent = "Recommended · " + REC_LABELS[p.rec];
-      badge.title = "Recommended in bird_menu(\"rec\") as a " + p.rec + " palette";
-      head.append(badge);
+      badge.textContent = "★ " + REC_LABELS[p.rec];
+      badge.title = "Recommended " + p.rec + " palette";
+      el.append(badge);
     }
-    const n = document.createElement("span");
-    n.className = "n-colors";
-    n.textContent = `${p.colors.length} colours`;
-    head.append(n);
 
     const strip = document.createElement("div");
     strip.className = "palette-strip";
@@ -105,19 +107,7 @@
       chips.append(c);
     });
 
-    const code = document.createElement("div");
-    code.className = "palette-code";
-    const rCall = `bird_colors("${p.name}")`;
-    const pre = document.createElement("code");
-    pre.textContent = rCall;
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "secondary small";
-    btn.textContent = "Copy R";
-    btn.addEventListener("click", () => copy(rCall, "R code"));
-    code.append(pre, btn);
-
-    el.append(head, strip, chips, code);
+    el.append(strip, chips);
     return el;
   }
 
